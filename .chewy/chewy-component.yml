@@ -1,0 +1,5 @@
+repository: https://github.com/gochewy/ory-oathkeeper.git
+name: ory-oathkeeper
+type: service
+version: 0.1.1-branch
+dependencies: []
