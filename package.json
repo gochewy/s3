@@ -5,8 +5,10 @@
         "@types/node": "^16"
     },
     "dependencies": {
-        "@gochewy/lib": "^0.1.1-beta.24",
-        "@pulumi/pulumi": "^3.0.0"
+        "@gochewy/lib": "^0.1.1-beta.30",
+        "@pulumi/pulumi": "^3.0.0",
+        "spdx-correct": "^3.2.0",
+        "spdx-expression-parse": "^3.0.1"
     },
     "scripts": {
         "lup": "chewy-cc rebuild lib && yarn upgrade @gochewy/lib",
