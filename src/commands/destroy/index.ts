@@ -6,9 +6,8 @@ import {execSync} from 'node:child_process'
 import {resolve} from 'node:path'
 import {cwd} from 'node:process'
 
-export default class DevIndex extends Command {
-  static description = 'runs the component in development'
-  static strict = false
+export default class DestroyIndex extends Command {
+  static description = 'describe the command here'
 
   static examples = [
     '<%= config.bin %> <%= command.id %>',
@@ -16,13 +15,15 @@ export default class DevIndex extends Command {
 
   static flags = {}
 
-  static args = []
+  static args = [{name: 'environment'}]
 
   public async run(): Promise<void> {
-    const {argv} = await this.parse(DevIndex)
+    const {args} = await this.parse(DestroyIndex)
+
+    const environment = args.environment || constants.CHEWY_DEV_ENV_NAME
 
     process.env.PULUMI_CONFIG_PASSPHRASE = chewy.environments.getEnvironmentSecret(
-      constants.CHEWY_DEV_ENV_NAME,
+      environment,
     )
 
     const deploymentDir = resolve(cwd(), '..', 'deployment')
@@ -46,8 +47,8 @@ export default class DevIndex extends Command {
       },
     })
 
-    const upResult = await stack.up()
+    const destroyResult = await stack.destroy()
 
-    chewy.utils.log.info(`${upResult.outputs}`)
+    chewy.utils.log.info(`${destroyResult.summary}`)
   }
 }

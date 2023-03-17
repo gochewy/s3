@@ -1,4 +1,10 @@
-import {Command, Flags} from '@oclif/core'
+import * as chewy from '@gochewy/lib'
+import {constants} from '@gochewy/lib'
+import {Command} from '@oclif/core'
+import {LocalWorkspace} from '@pulumi/pulumi/automation'
+import {execSync} from 'node:child_process'
+import {resolve} from 'node:path'
+import {cwd} from 'node:process'
 
 export default class DeployIndex extends Command {
   static description = 'deploys the component'
@@ -7,22 +13,40 @@ export default class DeployIndex extends Command {
     '<%= config.bin %> <%= command.id %>',
   ]
 
-  static flags = {
-    // flag with a value (-n, --name=VALUE)
-    name: Flags.string({char: 'n', description: 'name to print'}),
-    // flag with no value (-f, --force)
-    force: Flags.boolean({char: 'f'}),
-  }
+  static flags = {}
 
-  static args = [{name: 'file'}]
+  static args = [{name: 'environment'}]
 
   public async run(): Promise<void> {
-    const {args, flags} = await this.parse(DeployIndex)
+    const {args} = await this.parse(DeployIndex)
+    const environment = args.environment || constants.CHEWY_DEV_ENV_NAME
 
-    const name = flags.name ?? 'world'
-    this.log(`hello ${name} from /workspace/chewy-global/component-commands/src/commands/deploy/index.ts`)
-    if (args.file && flags.force) {
-      this.log(`you input --force and --file: ${args.file}`)
-    }
+    process.env.PULUMI_CONFIG_PASSPHRASE = chewy.environments.getEnvironmentSecret(
+      environment,
+    )
+
+    const deploymentDir = resolve(cwd(), '..', 'deployment')
+    const projectConfigDir = chewy.files.getProjectConfigDir()
+    const chewyProjectName = chewy.project.getProjectConfig().name
+    const componentDefinition = chewy.components.getInstalledComponentDefinition()
+
+    execSync(`pulumi login file://${projectConfigDir}`)
+
+    const stack = await LocalWorkspace.createOrSelectStack({
+      stackName: `${constants.CHEWY_DEV_ENV_NAME}-${componentDefinition.name}`,
+      workDir: deploymentDir,
+    }, {
+      projectSettings: {
+        name: chewyProjectName,
+        runtime: 'nodejs',
+        backend: {
+          url: `file://${projectConfigDir}`,
+        },
+      },
+    })
+
+    const upResult = await stack.up()
+
+    chewy.utils.log.info(`${JSON.stringify(upResult.outputs)}`)
   }
 }
